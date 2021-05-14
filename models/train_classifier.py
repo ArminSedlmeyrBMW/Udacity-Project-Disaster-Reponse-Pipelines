@@ -27,7 +27,7 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 def load_data(database_filepath):
     #1. Load data from database.
     engine = create_engine('sqlite:///{}'.format(database_filepath))
-    df = pd.read_sql_table(table_name=database_filepath, con=engine).head(1000)
+    df = pd.read_sql_table(table_name=database_filepath, con=engine)
     X = df.message.values
     Y = df.drop(columns=['genre', 'id', 'original', 'message']).values    
     return X, Y#, category_names

@@ -2,9 +2,12 @@ import json
 import plotly
 import pandas as pd
 import sys
+import re
 
-from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+from nltk.stem import PorterStemmer
 
 from flask import Flask
 from flask import render_template, request, jsonify
@@ -16,14 +19,15 @@ from sqlalchemy import create_engine
 app = Flask(__name__)
 
 def tokenize(text):
-    tokens = word_tokenize(text)
-    lemmatizer = WordNetLemmatizer()
-
-    clean_tokens = []
-    for tok in tokens:
-        clean_tok = lemmatizer.lemmatize(tok).lower().strip()
-        clean_tokens.append(clean_tok)
-
+    #normalize
+    text = re.sub(r"[^a-zA-Z0-9]", " ", text.lower())
+    #tokenize
+    words = word_tokenize(text)
+    #remove stop words
+    words = [w for w in words if w not in stopwords.words("english")]
+    #stem/lemmatize
+    words = [PorterStemmer().stem(w) for w in words]
+    clean_tokens = [WordNetLemmatizer().lemmatize(w) for w in words]
     return clean_tokens
 
 # load data
