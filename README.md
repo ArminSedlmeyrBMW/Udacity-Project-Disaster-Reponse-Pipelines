@@ -9,10 +9,13 @@ This README file includes a summary of the project, how to run the Python script
 5. The ML-model uses the input to label the text and outputs it back to the web app
 
 ### Explanation of the files in the repository
-classifier.pkl --> the machine-learning-model as a pickle file
-train_classifier.py --> the code which builds the ML-model by loading the data from the sql-lite database
-process_data.py --> the code to load, wrangle and save the data to a sql-lite database
-run.py --> the code to run the web app and execute relevant
+- classifier.pkl --> the machine-learning-model as a pickle file
+- train_classifier.py --> the code which builds the ML-model by loading the data from the sql-lite database
+- process_data.py --> the code to load, wrangle and save the data to a sql-lite database
+- run.py --> the code to run the web app
+- disaster_categories.csv --> labels
+- disaster_messages.csv --> input text for creating features
+- DisasterResponse.db --> sql-lite-data-base with the wrangled data
 
 ### Instructions (how to run the Python scripts and web app):
 1. Run the following commands in the project's root directory to set up your database and model.
