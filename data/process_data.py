@@ -35,14 +35,16 @@ def clean_data(df):
     for col_old in categories.columns.values:
         rename_dict[col_old]=col_names[0][i][0:-2]
         i=i+1
-    categories.rename(columns=rename_dict, inplace=True)    
+    categories.rename(columns=rename_dict, inplace=True)
+   
     #4. Convert category values to just numbers 0 or 1.
     for column in categories:
         # set each value to be the last character of the string
         categories[column] = categories[column].str.slice(start=-1)
 
         # convert column from string to numeric
-        categories[column] = categories[column].astype(int)    
+        categories[column] = categories[column].astype(int)
+    categories=categories.replace(2, 1) #replace 2 with 1, since 2 really does not make any sense to me     
     #5. Replace categories column in df with new category columns.  
     df.drop(columns=['categories'], inplace=True)
     df=pd.concat([df, categories], axis=1)
