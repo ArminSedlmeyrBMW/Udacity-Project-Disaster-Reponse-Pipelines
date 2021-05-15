@@ -3,11 +3,16 @@ import plotly
 import pandas as pd
 import sys
 import re
+import numpy as np
+import matplotlib.pyplot as plt
+import nltk
+nltk.download('stopwords')
 
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.stem import PorterStemmer
+from wordcloud import WordCloud
 
 from flask import Flask
 from flask import render_template, request, jsonify
@@ -40,6 +45,16 @@ df = pd.read_sql_table('data/DisasterResponse.db', engine)
 # load model
 model = joblib.load("../models/classifier.pkl")
 
+# create and save picture of word-cloud, since plotly does not have "word-cloud" yet for displaying it as "interactive" plot
+if 0: #@reviewer: hi, due to performance-reasons I commented this out and uploaded the picture to the workspace manually after computing it in the Workspace - ETL - section 9 if you want to double check it works, just run it there.
+    str_messages=' '.join(df.message)
+    tokenized_messages=tokenize(str_messages)
+    str_=' '.join(tokenized_messages)
+    wordcloud = WordCloud(width = 1000, height = 700).generate(str_)
+    plt.figure(figsize=(18,12))
+    plt.axis('off')
+    plt.imshow(wordcloud);
+    plt.savefig('\static\img\WordCloud-Message-Training-Data.png')
 
 # index webpage displays cool visuals and receives user input text for model
 @app.route('/')
@@ -47,14 +62,37 @@ model = joblib.load("../models/classifier.pkl")
 def index():
     
     # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
+    x = df.drop(columns=['id', 'message', 'original', 'genre']).corr().related.index.values
+    y = df.drop(columns=['id', 'message', 'original', 'genre']).corr().related.index.values
+    z = np.where(np.tril(df.drop(columns=['id', 'message', 'original', 'genre']).corr().values)==1, 0, np.tril(df.drop(columns=['id', 'message', 'original', 'genre']).corr().values))
     
     # create visuals
-    # TODO: Below is an example - modify to create your own visuals
     graphs = [
-        {
+        { # correlation matrix
+            'data': [
+                {
+                "type": 'heatmap',
+                "x": x,
+                "y": y,
+                "z": z
+                }
+            ],
+
+            'layout': {
+                'height': 1000,
+                'width': 1000,
+                'title': 'Correlation Matrix of Output Labels',
+                'yaxis': {
+                    'title': ""
+                },
+                'xaxis': {
+                    'title': ""
+                }
+            }
+        },
+        { # udacity example - genre counts
             'data': [
                 Bar(
                     x=genre_names,
@@ -71,7 +109,7 @@ def index():
                     'title': "Genre"
                 }
             }
-        }
+        }        
     ]
     
     # encode plotly graphs in JSON

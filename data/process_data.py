@@ -3,6 +3,14 @@ import pandas as pd
 from sqlalchemy import create_engine
 
 def load_data(messages_filepath, categories_filepath):
+    """load and merge .csv files to pd-DataFrame
+    Args:
+        messages_filepath: string. path to the messages .csv file
+        categories_filepath: string. path to the categories .csv file
+    Returns:
+        df: pandas DataFrame
+        """
+    
     #1. Load datasets.
     messages = pd.read_csv(messages_filepath)
     categories = pd.read_csv(categories_filepath)
@@ -12,6 +20,12 @@ def load_data(messages_filepath, categories_filepath):
 
 
 def clean_data(df):
+    """ splits the categories column into separate, clearly named columns, converts values to binary, and drops duplicates.
+    Args:
+        df: pandas DataFrame
+    Returns:         
+        df: pandas DataFrame
+        """    
     #3. Split categories into separate category columns.
     categories = df.categories.str.split(pat=';', expand=True)
     col_names = df.categories.head(1).str.split(pat=';')
@@ -39,6 +53,11 @@ def clean_data(df):
 
 
 def save_data(df, database_filename):
+    """ creates sql-lite database
+    Args:
+        df: pandas DataFrame
+        database_filename: name of database
+    """       
     #7. Save the clean dataset into an sqlite database.
     engine = create_engine('sqlite:///{}'.format(database_filename))
     df.to_sql(database_filename, engine, index=False)

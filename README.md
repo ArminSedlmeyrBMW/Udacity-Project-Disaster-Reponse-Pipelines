@@ -17,6 +17,42 @@ This README file includes a summary of the project, how to run the Python script
 - disaster_messages.csv --> input text for creating features
 - DisasterResponse.db --> sql-lite-data-base with the wrangled data
 
+### Installations required:
+import json
+import plotly
+import sys
+import pandas as pd
+from sqlalchemy import create_engine
+import re
+import numpy as np
+import nltk
+
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+from nltk.stem import PorterStemmer
+from wordcloud import WordCloud
+
+from flask import Flask
+from flask import render_template, request, jsonify
+from plotly.graph_objs import Bar
+from sklearn.externals import joblib
+from sqlalchemy import create_engine
+
+nltk.download(['punkt', 'wordnet', 'stopwords'])
+
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn.metrics import confusion_matrix, precision_score, f1_score, recall_score, classification_report, accuracy_score
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.kernel_approximation import RBFSampler
+from sklearn.linear_model import SGDClassifier, LogisticRegression #recording to this cheat-sheet i should use this https://scikit-learn.org/stable/tutorial/machine_learning_map/index.html
+from sklearn.tree import DecisionTreeClassifier 
+from sklearn.multioutput import MultiOutputClassifier
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+
+
 ### Instructions (how to run the Python scripts and web app):
 1. Run the following commands in the project's root directory to set up your database and model.
 
@@ -26,6 +62,6 @@ This README file includes a summary of the project, how to run the Python script
         python models/train_classifier.py data/DisasterResponse.db models/classifier.pkl
 
 2. Run the following command in the app's directory to run your web app.
-    `python run.py`
+    python run.py
 
 3. Go to https://view6914b2f4-3001.udacity-student-workspaces.com/

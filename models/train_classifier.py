@@ -1,6 +1,6 @@
-import sys
 import nltk
 nltk.download(['punkt', 'wordnet', 'stopwords'])
+import sys
 
 import pickle
 import re
@@ -25,15 +25,29 @@ from sklearn.multioutput import MultiOutputClassifier
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
 def load_data(database_filepath):
+    """load data from sql-lite database and split into input and output pandas datasets
+    Args:
+        database_filepath: string. path to sql-lite database
+    Returns:
+        X: Training Inputs: Messages
+        Y: Training Outputs: Labels
+     """    
     #1. Load data from database.
     engine = create_engine('sqlite:///{}'.format(database_filepath))
     df = pd.read_sql_table(table_name=database_filepath, con=engine)
     X = df.message.values
-    Y = df.drop(columns=['genre', 'id', 'original', 'message']).values    
-    return X, Y#, category_names
+    Y = df.drop(columns=['genre', 'id', 'original', 'message']).values
+    category_names = df.drop(columns=['genre', 'id', 'original', 'message']).columns
+    return X, Y, category_names
 
 
 def tokenize(text):
+    """normalize, tokenize, remove-stop-words, stem/lematize
+    Args:
+        text: string.
+    Returns:
+        words: tokenized words
+     """        
     #2. Write a tokenization function to process your text data
     #normalize
     text = re.sub(r"[^a-zA-Z0-9]", " ", text.lower())
@@ -47,40 +61,81 @@ def tokenize(text):
     return words
 
 
-def build_model(X, Y):
+def build_model(X, Y, optimize_model):
+    """builds model and returns train-test-split
+    Args:
+        X: pd-dataFrame
+        Y: pd-dataFrame
+    Returns:
+        model: model as pickle file
+        X_train: train dataset - input 
+        X_test: test dataset - input 
+        y_train: train dataset - output
+        y_test: test dataset - output
+     """            
     #3. Build a machine learning pipeline
-    model = Pipeline([
+    pipeline = Pipeline([
         ('vect', CountVectorizer(tokenizer=tokenize)),
         ('tfidf', TfidfTransformer()),
         ('clf', MultiOutputClassifier(estimator=RandomForestClassifier()))
     ])
+    parameters = {'clf__estimator__n_estimators': [100, 200]}
+    if optimize_model == True: 
+        model = GridSearchCV(pipeline, param_grid=parameters)
+    else:
+        model = pipeline
+    
     #4. Train pipeline
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2)
-    category_names = np.unique(y_test)    
-    return model, X_train, X_test, y_train, y_test, category_names
+    return model, X_train, X_test, y_train, y_test
 
 
 def evaluate_model(model, X_test, y_test, category_names):
+    """creates predictions scores for all categories as DataFrame and print
+    Args:
+        model,
+        X_test,
+        y_test,
+        category_names   
+    Returns:
+        df_multioutput_prediction_scores: pd.DataFrame which includes relevant performance metrics to evaulate prediction performance for all 36 categories
+     """    
     #5. Test your model
     y_pred = model.predict(X_test)
+    LABELS = np.unique(y_pred)
     dict_multioutput_prediction_scores = {}
     dict_multioutput_prediction_scores['Precision'] = []
     dict_multioutput_prediction_scores['Accuracy'] = []
     dict_multioutput_prediction_scores['F1'] = []
     dict_multioutput_prediction_scores['Recall'] = []
     for i in np.arange(y_pred.shape[1]):   
-        dict_multioutput_prediction_scores['Precision'].append(precision_score(y_test[:,i], y_pred[:,i], labels=category_names, \
+        print('00-Predicted-Variable:')
+        print(category_names[i])
+        print('01-Classification-Report:')
+        print(classification_report(y_test[:,i], y_pred[:,i], labels=LABELS))    
+        print('02-Confusion-Matrix:')
+        print(confusion_matrix(y_test[:,i], y_pred[:,i], labels=LABELS))
+        print('03-Accuracy:')
+        print(accuracy_score(y_test[:,i], y_pred[:,i]))
+        print('------------------------------')        
+        dict_multioutput_prediction_scores['Precision'].append(precision_score(y_test[:,i], y_pred[:,i], labels=LABELS, \
                                                                                average='micro'))
         dict_multioutput_prediction_scores['Accuracy'].append(accuracy_score(y_test[:,i], y_pred[:,i]))
-        dict_multioutput_prediction_scores['F1'].append(f1_score(y_test[:,i], y_pred[:,i], labels=category_names, average='micro'))
-        dict_multioutput_prediction_scores['Recall'].append(recall_score(y_test[:,i], y_pred[:,i], labels=category_names, \
+        dict_multioutput_prediction_scores['F1'].append(f1_score(y_test[:,i], y_pred[:,i], labels=LABELS, average='micro'))
+        dict_multioutput_prediction_scores['Recall'].append(recall_score(y_test[:,i], y_pred[:,i], labels=LABELS, \
                                                                          average='micro'))
         df_multioutput_prediction_scores=pd.DataFrame(dict_multioutput_prediction_scores)
+    print('-------- MODEL SUMMARY (mean performance over categories) ------:')
     print(df_multioutput_prediction_scores.mean())   
     return df_multioutput_prediction_scores
 
 
 def save_model(model, model_filepath):
+    """save model as pickle file
+    Args:
+        model: model as sklearn model
+        model_filepath: where to save the model
+     """    
     pickle.dump(model,open(model_filepath,'wb'))
     
 
@@ -88,12 +143,10 @@ def main():
     if len(sys.argv) == 3:
         database_filepath, model_filepath = sys.argv[1:]
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))
-        X, Y = load_data(database_filepath)
-        #X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
+        X, Y, category_names = load_data(database_filepath)
         
         print('Building model...')
-        model, X_train, X_test, y_train, y_test, category_names = build_model(X, Y)
-        #model = build_model()
+        model, X_train, X_test, y_train, y_test = build_model(X, Y, False) #due to performance reasons I do not want to to cv here, since the model is fine without it already
         
         print('Training model...')
         model.fit(X_train, y_train)
