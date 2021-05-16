@@ -11,7 +11,7 @@ from sqlalchemy import create_engine
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
-from nltk.stem import PorterStemmer
+#from nltk.stem import PorterStemmer
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline, FeatureUnion
@@ -56,7 +56,7 @@ def tokenize(text):
     #remove stop words
     words = [w for w in words if w not in stopwords.words("english")]
     #stem/lemmatize
-    words = [PorterStemmer().stem(w) for w in words]
+    #words = [PorterStemmer().stem(w) for w in words] this post https://knowledge.udacity.com/questions/204303 explains, why it is not smart to use both!!!
     words = [WordNetLemmatizer().lemmatize(w) for w in words]
     return words
 
@@ -81,7 +81,7 @@ def build_model(X, Y, optimize_model):
     ])
     parameters = {'clf__estimator__n_estimators': [100, 200]}
     if optimize_model == True: 
-        model = GridSearchCV(pipeline, param_grid=parameters)
+        model = GridSearchCV(pipeline, param_grid=parameters, verbose=3) #great tip by reviewer. with this you can output the progress in the terminal!
     else:
         model = pipeline
     
@@ -146,7 +146,7 @@ def main():
         X, Y, category_names = load_data(database_filepath)
         
         print('Building model...')
-        model, X_train, X_test, y_train, y_test = build_model(X, Y, False) #due to performance reasons I do not want to to cv here, since the model is fine without it already
+        model, X_train, X_test, y_train, y_test = build_model(X, Y, True) #due to performance reasons I do not want to to cv here, since the model is fine without it already
         
         print('Training model...')
         model.fit(X_train, y_train)
