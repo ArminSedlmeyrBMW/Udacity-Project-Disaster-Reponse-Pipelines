@@ -146,7 +146,7 @@ def main():
         X, Y, category_names = load_data(database_filepath)
         
         print('Building model...')
-        model, X_train, X_test, y_train, y_test = build_model(X, Y, True) #due to performance reasons I do not want to to cv here, since the model is fine without it already
+        model, X_train, X_test, y_train, y_test = build_model(X, Y, False) #due to performance reasons I do not want to to cv here, since the model is fine without it already
         
         print('Training model...')
         model.fit(X_train, y_train)
